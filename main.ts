@@ -1,6 +1,6 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, Modal, ButtonComponent, DropdownComponent } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, Notice, Modal, DropdownComponent } from 'obsidian';
 
-interface EntitySchema {
+export interface EntitySchema {
 	name: string;
 	properties: Record<string, PropertyDefinition>;
 	matchCriteria: MatchCriteria;
@@ -78,6 +78,7 @@ const DEFAULT_SETTINGS: EntitySchemaSettings = {
 export default class EntitySchemaPlugin extends Plugin {
 	settings: EntitySchemaSettings;
 	entityInstances: EntityInstance[] = [];
+	static DEFAULT_SETTINGS = DEFAULT_SETTINGS;
 
 	async onload() {
 		await this.loadSettings();
@@ -291,18 +292,30 @@ export default class EntitySchemaPlugin extends Plugin {
 
 	private getMissingProperties(frontmatter: any, schema: EntitySchema): string[] {
 		const missing: string[] = [];
+		
+		// Check required properties defined in schema.properties
 		for (const [propName, propDef] of Object.entries(schema.properties)) {
 			if (propDef.required && !(propName in frontmatter)) {
 				missing.push(propName);
 			}
 		}
+		
+		// Also check required properties defined in matchCriteria.requiredProperties
+		if (schema.matchCriteria.requiredProperties) {
+			for (const propName of schema.matchCriteria.requiredProperties) {
+				if (!(propName in frontmatter) && !missing.includes(propName)) {
+					missing.push(propName);
+				}
+			}
+		}
+		
 		return missing;
 	}
 
 	async validateEntities() {
 		let totalEntities = 0;
 		let validEntities = 0;
-		let issues: string[] = [];
+		const issues: string[] = [];
 
 		for (const instance of this.entityInstances) {
 			totalEntities++;
