@@ -1,94 +1,366 @@
-# Obsidian Sample Plugin
+# Entity Schema Manager Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+A powerful Obsidian plugin that helps you manage entity schemas and perform bulk operations on note properties. Perfect for maintaining consistent metadata across your entity-based note-taking system.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Entity Type Management**: Define and manage different types of entities (Person, Team, Project, etc.)
+- **Schema Validation**: Validate entities against their defined schemas
+- **Bulk Property Operations**: Add properties to multiple entities at once
+- **Schema Drift Detection**: Identify entities missing required properties
+- **Safe Operations**: Automatic backups before bulk operations
+- **Flexible Matching**: Match entities by properties, folder paths, tags, or name patterns
 
-## First time developing plugins?
+## Installation
 
-Quick starting guide for new plugin devs:
+### Manual Installation
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1. Download the plugin files (`main.js`, `manifest.json`, `styles.css`)
+2. Create a new folder in your vault's `.obsidian/plugins/` directory called `entity-schema-manager`
+3. Place the downloaded files in this folder
+4. Reload Obsidian or restart the app
+5. Enable the plugin in Settings > Community Plugins
 
-## Releasing new releases
+### Development Installation
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Clone this repository to your vault's `.obsidian/plugins/` directory
+2. Run `npm install` to install dependencies
+3. Run `npm run build` to compile the plugin
+4. Reload Obsidian and enable the plugin
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+## Usage
 
-## Adding your plugin to the community plugin list
+### Initial Setup
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. Open the plugin settings (Settings > Entity Schema Manager)
+2. Review the default entity schemas (Person, Team) or create your own
+3. Run the "Scan for entities" command to index your existing notes
 
-## How to use
+### Basic Workflow
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+1. **Scan Entities**: Use the command palette (`Ctrl/Cmd + P`) and run "Entity Schema Manager: Scan for entities"
+2. **View Dashboard**: Click the database icon in the ribbon or use "Entity Schema Manager: Show dashboard"
+3. **Add Properties**: Use "Entity Schema Manager: Add property to entity type" to bulk-add properties
+4. **Validate**: Run "Entity Schema Manager: Validate all entities" to check for schema compliance
 
-## Manually installing the plugin
+### Entity Schema Configuration
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+Entity schemas are defined with the following structure:
 
 ```json
 {
-    "fundingUrl": "https://buymeacoffee.com"
+  "name": "Person",
+  "description": "Individual person entity",
+  "properties": {
+    "name": { "type": "string", "required": true },
+    "role": { "type": "string", "required": false },
+    "team": { "type": "string", "required": false },
+    "email": { "type": "string", "required": false }
+  },
+  "matchCriteria": {
+    "requiredProperties": ["name"],
+    "folderPath": "People"
+  }
 }
 ```
 
-If you have multiple URLs, you can also do:
+#### Property Types
+
+- `string`: Text values
+- `number`: Numeric values
+- `boolean`: True/false values
+- `array`: Lists of values
+- `object`: Complex nested data
+
+#### Match Criteria
+
+- `requiredProperties`: Properties that must exist for an entity to match this schema
+- `folderPath`: Notes must be in this folder (or subfolder)
+- `tagPattern`: Notes must contain tags matching this pattern
+- `namePattern`: Note filename must contain this text
+- `propertyValues`: Properties must have specific values (supports exact match, case-insensitive strings, and array options)
+
+### Common Use Cases
+
+#### Creating Specialized Entity Types Based on Property Values
+
+You can now create more specific entity types that inherit from broader categories:
 
 ```json
 {
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
+  "name": "GitHub Employee",
+  "description": "Employees working at GitHub",
+  "properties": {
+    "name": { "type": "string", "required": true },
+    "is": { "type": "string", "required": true },
+    "role": { "type": "string", "required": true },
+    "team": { "type": "string", "required": true },
+    "level": { "type": "string", "required": false },
+    "github_username": { "type": "string", "required": false }
+  },
+  "matchCriteria": {
+    "requiredProperties": ["name", "is"],
+    "folderPath": "People",
+    "propertyValues": {
+      "is": "[[atlas/entities/person.md|person]]"
     }
+  }
 }
 ```
 
-## API Documentation
+This schema will match any person entity that has an `is` property linking to your person entity definition, regardless of how the link is formatted.
 
-See https://github.com/obsidianmd/obsidian-api
+#### Adding a New Property to All Team Members
+
+1. Run "Add property to entity type"
+2. Select "Person" entity type
+3. Enter property name: "level"
+4. Enter default value: "unknown"
+5. Preview the changes and confirm
+6. The plugin will update all Person entities with the new property
+
+#### Finding Schema Violations
+
+1. Run "Show schema drift" to see entities missing required properties
+2. Use "Validate all entities" for a comprehensive report
+3. Fix issues manually or use bulk operations to add missing properties
+
+#### Reorganizing Your Entity Structure
+
+1. Update schema definitions in settings
+2. Run "Scan for entities" to re-index with new criteria
+3. Use "Show schema drift" to identify entities that need updates
+4. Perform bulk operations to align entities with new schema
+
+### Example Entity Frontmatter
+
+**GitHub Employee Entity:**
+
+```yaml
+---
+name: "John Doe"
+is: "[[atlas/entities/person.md|person]]"
+role: "Software Engineer"
+team: "Backend Team"
+email: "john.doe@github.com"
+level: "Senior"
+github_username: "johndoe"
+tags: ["person", "github", "engineer"]
+---
+```
+
+**Alternative GitHub Employee (different link format):**
+
+```yaml
+---
+name: "Jane Smith"
+is: "[[person]]"  # This will also match the schema
+role: "Product Manager"
+team: "Platform Team"
+email: "jane.smith@github.com"
+level: "Staff"
+github_username: "janesmith"
+tags: ["person", "github", "pm"]
+---
+```
+
+**Regular Person Entity (won't match GitHub Employee schema):**
+
+```yaml
+---
+name: "Bob Johnson"
+is: "[[atlas/entities/person.md|person]]"
+role: "Consultant"
+company: "Independent"
+email: "bob@example.com"
+tags: ["person", "consultant"]
+---
+```
+
+**Team Entity:**
+
+```yaml
+---
+name: "Backend Team"
+lead: "Jane Smith"
+members: ["John Doe", "Alice Johnson"]
+focus_area: "API Development"
+tags: ["team", "engineering"]
+---
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `Scan for entities` | Index all entities in your vault |
+| `Add property to entity type` | Bulk-add a property to all entities of a specific type |
+| `Validate all entities` | Check all entities against their schemas |
+| `Show schema drift` | Display entities with missing properties |
+| `Show dashboard` | Overview of all entities and their status |
+
+## Settings
+
+- **Backup before operations**: Automatically create backups before bulk changes
+- **Show validation indicators**: Display visual indicators for schema compliance
+- **Entity Schemas**: Configure your entity types and their properties
+
+## Safety Features
+
+### Automatic Backups
+
+When enabled, the plugin creates backups in the `entity-schema-backups` folder before any bulk operation. Backups are timestamped and include the original filename.
+
+### Preview Mode
+
+All bulk operations show a preview of what will be changed before applying modifications. You can review and cancel if something looks incorrect.
+
+### Undo Support
+
+Since operations modify YAML frontmatter, you can use Obsidian's built-in undo functionality (`Ctrl/Cmd + Z`) to revert recent changes.
+
+## Troubleshooting
+
+### Plugin Not Finding My Entities
+
+1. Check that your entities have the required properties defined in the schema
+2. Verify the `matchCriteria` settings match your folder structure
+3. Run "Scan for entities" after making schema changes
+4. Ensure your notes have valid YAML frontmatter
+
+### Bulk Operations Not Working
+
+1. Verify you have write permissions to your vault
+2. Check that backup folder can be created if backups are enabled
+3. Ensure target entities aren't open in other applications
+4. Try with a smaller subset of entities first
+
+### Schema Validation Issues
+
+1. Check for typos in property names (they're case-sensitive)
+2. Ensure YAML frontmatter syntax is correct
+3. Verify that required properties actually exist in the frontmatter
+4. Use "Show schema drift" to identify specific issues
+
+## Advanced Usage
+
+### Custom Entity Types
+
+You can create custom entity types for your specific use case:
+
+```json
+{
+  "name": "Project",
+  "description": "Software development project",
+  "properties": {
+    "name": { "type": "string", "required": true },
+    "status": { "type": "string", "required": true },
+    "team": { "type": "string", "required": false },
+    "deadline": { "type": "string", "required": false },
+    "stakeholders": { "type": "array", "required": false }
+  },
+  "matchCriteria": {
+    "folderPath": "Projects",
+    "requiredProperties": ["name", "status"]
+  }
+}
+```
+
+### Complex Match Criteria
+
+Combine multiple criteria for precise entity matching:
+
+```json
+{
+  "matchCriteria": {
+    "requiredProperties": ["name", "type"],
+    "folderPath": "Entities/People",
+    "tagPattern": "person",
+    "namePattern": "Profile",
+    "propertyValues": {
+      "company": "GitHub",
+      "status": "active"
+    }
+  }
+}
+```
+
+#### Property Value Matching Options
+
+The `propertyValues` criteria supports several matching modes, with special handling for Obsidian links:
+
+1. **Link Matching** (smart handling of Obsidian [[links]]):
+
+   ```json
+   "propertyValues": {
+     "is": "[[atlas/entities/person.md|person]]"
+   }
+   ```
+
+   This will match any of these variations:
+   - `"[[atlas/entities/person.md|person]]"` (exact match)
+   - `"[[atlas/entities/person.md]]"` (same file, no display text)
+   - `"[[person.md]]"` (basename match)
+   - `"person"` (basename without extension)
+   - `"atlas/entities/person"` (path without extension)
+
+2. **Exact Match** (numbers, booleans):
+
+   ```json
+   "propertyValues": {
+     "age": 30,
+     "is_manager": true
+   }
+   ```
+
+3. **Case-Insensitive String Match**:
+
+   ```json
+   "propertyValues": {
+     "company": "github"  // Matches "GitHub", "github", "GITHUB"
+   }
+   ```
+
+4. **Array Options** (entity must have one of these values):
+
+   ```json
+   "propertyValues": {
+     "department": ["Engineering", "Product", "Design"],
+     "type": ["[[person]]", "[[individual]]"]  // Multiple link options
+   }
+   ```
+
+### Default Values for Different Types
+
+When adding properties, you can specify different types of default values:
+
+- String: `"unknown"`
+- Number: `0`
+- Boolean: `false`
+- Array: `["tag1", "tag2"]`
+- Object: `{"key": "value"}`
+
+## Contributing
+
+This plugin is designed to be extensible. Key areas for contribution:
+
+- Additional property types
+- More sophisticated matching criteria
+- Export/import of schema configurations
+- Integration with other Obsidian plugins
+- Advanced validation rules
+
+## License
+
+MIT License - feel free to modify and distribute as needed.
+
+## Support
+
+If you encounter issues or have feature requests, please check the troubleshooting section first. For entity-based note-taking workflows, this plugin works best when combined with:
+
+- Consistent folder organization
+- Standardized tagging systems
+- Regular use of YAML frontmatter
+- Periodic schema validation
+
+Happy note-taking!
