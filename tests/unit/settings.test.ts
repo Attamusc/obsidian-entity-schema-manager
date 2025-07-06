@@ -5,9 +5,10 @@ describe('Settings Management', () => {
   let app: App;
   let plugin: EntitySchemaPlugin;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app = new App();
     plugin = new EntitySchemaPlugin(app, {} as any);
+    await plugin.initializeForTesting();
   });
 
   describe('Default Settings', () => {
@@ -24,9 +25,7 @@ describe('Settings Management', () => {
     });
 
     test('should have default Person schema', () => {
-      const defaultSettings = (plugin as any).constructor.DEFAULT_SETTINGS || plugin.settings;
-      
-      const personSchema = defaultSettings.schemas.find((s: any) => s.name === 'Person');
+      const personSchema = plugin.settings.schemas.find((s: any) => s.name === 'Person');
       expect(personSchema).toBeDefined();
       expect(personSchema.properties).toHaveProperty('name');
       expect(personSchema.properties.name.required).toBe(true);
@@ -35,9 +34,7 @@ describe('Settings Management', () => {
     });
 
     test('should have default Team schema', () => {
-      const defaultSettings = (plugin as any).constructor.DEFAULT_SETTINGS || plugin.settings;
-      
-      const teamSchema = defaultSettings.schemas.find((s: any) => s.name === 'Team');
+      const teamSchema = plugin.settings.schemas.find((s: any) => s.name === 'Team');
       expect(teamSchema).toBeDefined();
       expect(teamSchema.properties).toHaveProperty('name');
       expect(teamSchema.properties.name.required).toBe(true);

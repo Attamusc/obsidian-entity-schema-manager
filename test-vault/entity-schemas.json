@@ -1,0 +1,106 @@
+[
+  {
+    "name": "Person",
+    "properties": {
+      "name": {
+        "type": "string",
+        "required": true
+      },
+      "role": {
+        "type": "string",
+        "required": false
+      },
+      "team": {
+        "type": "string",
+        "required": false
+      },
+      "email": {
+        "type": "string",
+        "required": false
+      },
+      "department": {
+        "type": "string",
+        "required": false
+      }
+    },
+    "matchCriteria": {
+      "requiredProperties": [
+        "name",
+        "is"
+      ],
+      "folderPath": "atlas/notes",
+      "propertyValues": {
+        "is": "atlas/entities/person"
+      }
+    },
+    "description": "Individual person entity with department field"
+  },
+  {
+    "name": "Team",
+    "properties": {
+      "name": {
+        "type": "string",
+        "required": true
+      },
+      "members": {
+        "type": "array",
+        "required": false
+      },
+      "lead": {
+        "type": "string",
+        "required": false
+      },
+      "budget": {
+        "type": "number",
+        "required": false
+      }
+    },
+    "matchCriteria": {
+      "requiredProperties": [
+        "name",
+        "is"
+      ],
+      "folderPath": "atlas/notes",
+      "propertyValues": {
+        "is": "atlas/entities/team"
+      }
+    },
+    "description": "Team or group entity with budget tracking"
+  },
+  {
+    "name": "Project",
+    "properties": {
+      "name": {
+        "type": "string",
+        "required": true
+      },
+      "status": {
+        "type": "string",
+        "required": true
+      },
+      "team": {
+        "type": "string",
+        "required": false
+      },
+      "deadline": {
+        "type": "string",
+        "required": false
+      },
+      "priority": {
+        "type": "string",
+        "required": false
+      }
+    },
+    "matchCriteria": {
+      "requiredProperties": [
+        "name",
+        "type"
+      ],
+      "folderPath": "projects",
+      "propertyValues": {
+        "type": "project"
+      }
+    },
+    "description": "Project entity with priority tracking"
+  }
+]

@@ -6,7 +6,7 @@ describe('Schema Matching', () => {
   let app: App;
   let plugin: EntitySchemaPlugin;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app = new App();
     plugin = new EntitySchemaPlugin(app, {} as any);
     plugin.settings = {
@@ -14,6 +14,7 @@ describe('Schema Matching', () => {
       backupBeforeOperations: true,
       showValidationIndicators: true
     };
+    await plugin.initializeForTesting();
   });
 
   describe('matchesSchema', () => {

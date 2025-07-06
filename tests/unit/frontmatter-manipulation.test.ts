@@ -6,9 +6,10 @@ describe('Frontmatter Manipulation', () => {
   let app: App;
   let plugin: EntitySchemaPlugin;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app = new App();
     plugin = new EntitySchemaPlugin(app, {} as any);
+    await plugin.initializeForTesting();
   });
 
   describe('addPropertyToFrontmatter', () => {

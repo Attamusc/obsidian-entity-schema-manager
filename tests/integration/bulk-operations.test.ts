@@ -6,7 +6,7 @@ describe('Bulk Operations Integration', () => {
   let app: App;
   let plugin: EntitySchemaPlugin;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app = new App();
     plugin = new EntitySchemaPlugin(app, {} as any);
     plugin.settings = {
@@ -14,6 +14,7 @@ describe('Bulk Operations Integration', () => {
       backupBeforeOperations: true,
       showValidationIndicators: true
     };
+    await plugin.initializeForTesting();
   });
 
   describe('performBulkPropertyAddition', () => {
@@ -76,6 +77,9 @@ Content here.`);
     test('should not create backups when disabled', async () => {
       plugin.settings.backupBeforeOperations = false;
       const targetEntities = plugin.entityInstances.filter(e => e.entityType === 'Person');
+      
+      // Clear previous calls to exists (from schema loading)
+      app.vault.adapter.exists = jest.fn().mockResolvedValue(false);
       
       await plugin.performBulkPropertyAddition(targetEntities, 'department', 'Engineering');
       
@@ -172,7 +176,7 @@ Content here.`);
 
     test('should find entities of specified type', async () => {
       // Mock the modal to auto-confirm by directly calling performBulkPropertyAddition
-      const performSpy = jest.spyOn(plugin, 'performBulkPropertyAddition').mockResolvedValue();
+      const performSpy = jest.spyOn(plugin, 'performBulkPropertyAddition').mockResolvedValue({ success: 1, errors: 0 });
       
       // Instead of testing the full modal flow, test that the right entities are identified
       const targetEntities = plugin.entityInstances.filter(e => e.entityType === 'Person');
