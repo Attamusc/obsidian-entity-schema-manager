@@ -129,15 +129,24 @@ export default class EntitySchemaPlugin extends Plugin {
 	}
 
 	async scanEntities() {
+		console.log('Entity Schema Manager: Starting entity scan...');
 		this.entityInstances = [];
 		const files = this.app.vault.getMarkdownFiles();
+		console.log(`Entity Schema Manager: Found ${files.length} markdown files to scan`);
 		
 		for (const file of files) {
 			const metadata = this.app.metadataCache.getFileCache(file);
-			if (!metadata?.frontmatter) continue;
+			if (!metadata?.frontmatter) {
+				console.log(`Entity Schema Manager: Skipping ${file.path} - no frontmatter`);
+				continue;
+			}
+
+			console.log(`Entity Schema Manager: Scanning ${file.path} with frontmatter`);
+			let matchedSchema = false;
 
 			for (const schema of this.settings.schemas) {
 				if (this.matchesSchema(file, metadata.frontmatter, schema)) {
+					console.log(`Entity Schema Manager: ✓ ${file.path} matches "${schema.name}" entity type`);
 					const missingProperties = this.getMissingProperties(metadata.frontmatter, schema);
 					this.entityInstances.push({
 						file,
@@ -145,11 +154,17 @@ export default class EntitySchemaPlugin extends Plugin {
 						properties: metadata.frontmatter,
 						missingProperties
 					});
+					matchedSchema = true;
 					break; // Only match first applicable schema
 				}
 			}
+
+			if (!matchedSchema) {
+				console.log(`Entity Schema Manager: ✗ ${file.path} does not match any entity schemas`);
+			}
 		}
 
+		console.log(`Entity Schema Manager: Scan complete. Found ${this.entityInstances.length} entities`);
 		new Notice(`Found ${this.entityInstances.length} entities`);
 	}
 
