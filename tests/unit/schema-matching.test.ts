@@ -1,5 +1,8 @@
 import { App, TFile } from '../mocks/obsidian-api';
 import EntitySchemaPlugin from '../../main';
+import { SchemaManager } from '../../src/schema-manager';
+import { EntityScanner } from '../../src/entity-scanner';
+import { BulkOperations } from '../../src/bulk-operations';
 import { testSchemas, testFrontmatter } from '../fixtures/test-schemas';
 
 describe('Schema Matching', () => {
@@ -14,7 +17,10 @@ describe('Schema Matching', () => {
       backupBeforeOperations: true,
       showValidationIndicators: true
     };
-    await plugin.initializeForTesting();
+    await plugin.loadSettings();
+    plugin.schemaManager = new SchemaManager(app);
+    plugin.entityScanner = new EntityScanner(app);
+    plugin.bulkOperations = new BulkOperations(app, () => plugin.settings);
   });
 
   describe('matchesSchema', () => {
@@ -22,7 +28,7 @@ describe('Schema Matching', () => {
       const file = new TFile('atlas/notes/john.md');
       const schema = testSchemas[0]; // Person schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.validPersonEntity, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.validPersonEntity, schema);
 
       expect(result).toBe(true);
     });
@@ -31,7 +37,7 @@ describe('Schema Matching', () => {
       const file = new TFile('atlas/notes/jane.md');
       const schema = testSchemas[0]; // Person schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.validPersonEntitySimpleLink, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.validPersonEntitySimpleLink, schema);
 
       expect(result).toBe(true);
     });
@@ -40,7 +46,7 @@ describe('Schema Matching', () => {
       const file = new TFile('atlas/notes/invalid.md');
       const schema = testSchemas[0]; // Person schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.invalidPersonMissingName, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.invalidPersonMissingName, schema);
 
       expect(result).toBe(false);
     });
@@ -49,7 +55,7 @@ describe('Schema Matching', () => {
       const file = new TFile('atlas/notes/invalid.md');
       const schema = testSchemas[0]; // Person schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.invalidPersonMissingIs, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.invalidPersonMissingIs, schema);
 
       expect(result).toBe(false);
     });
@@ -58,7 +64,7 @@ describe('Schema Matching', () => {
       const file = new TFile('wrong-folder/alice.md');
       const schema = testSchemas[0]; // Person schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.validPersonEntity, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.validPersonEntity, schema);
 
       expect(result).toBe(false);
     });
@@ -67,7 +73,7 @@ describe('Schema Matching', () => {
       const file = new TFile('atlas/notes/backend-team.md');
       const schema = testSchemas[1]; // Team schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.validTeamEntity, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.validTeamEntity, schema);
 
       expect(result).toBe(true);
     });
@@ -76,7 +82,7 @@ describe('Schema Matching', () => {
       const file = new TFile('atlas/notes/note.md');
       const schema = testSchemas[0]; // Person schema
 
-      const result = (plugin as any).matchesSchema(file, testFrontmatter.nonMatchingEntity, schema);
+      const result = (plugin.entityScanner as any).matchesSchema(file, testFrontmatter.nonMatchingEntity, schema);
 
       expect(result).toBe(false);
     });
@@ -84,70 +90,70 @@ describe('Schema Matching', () => {
 
   describe('comparePropertyValues', () => {
     test('should match exact string values case-insensitively', () => {
-      const result = (plugin as any).comparePropertyValues('GitHub', 'github');
+      const result = (plugin.entityScanner as any).comparePropertyValues('GitHub', 'github');
       expect(result).toBe(true);
     });
 
     test('should match exact numeric values', () => {
-      const result = (plugin as any).comparePropertyValues(42, 42);
+      const result = (plugin.entityScanner as any).comparePropertyValues(42, 42);
       expect(result).toBe(true);
     });
 
     test('should not match different numeric values', () => {
-      const result = (plugin as any).comparePropertyValues(42, 43);
+      const result = (plugin.entityScanner as any).comparePropertyValues(42, 43);
       expect(result).toBe(false);
     });
 
     test('should match boolean values', () => {
-      expect((plugin as any).comparePropertyValues(true, true)).toBe(true);
-      expect((plugin as any).comparePropertyValues(false, false)).toBe(true);
-      expect((plugin as any).comparePropertyValues(true, false)).toBe(false);
+      expect((plugin.entityScanner as any).comparePropertyValues(true, true)).toBe(true);
+      expect((plugin.entityScanner as any).comparePropertyValues(false, false)).toBe(true);
+      expect((plugin.entityScanner as any).comparePropertyValues(true, false)).toBe(false);
     });
 
     test('should handle null/undefined values', () => {
-      expect((plugin as any).comparePropertyValues(null, null)).toBe(true);
-      expect((plugin as any).comparePropertyValues(undefined, undefined)).toBe(true);
-      expect((plugin as any).comparePropertyValues(null, undefined)).toBe(false);
-      expect((plugin as any).comparePropertyValues('value', null)).toBe(false);
+      expect((plugin.entityScanner as any).comparePropertyValues(null, null)).toBe(true);
+      expect((plugin.entityScanner as any).comparePropertyValues(undefined, undefined)).toBe(true);
+      expect((plugin.entityScanner as any).comparePropertyValues(null, undefined)).toBe(false);
+      expect((plugin.entityScanner as any).comparePropertyValues('value', null)).toBe(false);
     });
 
     test('should match against array of expected values (OR logic)', () => {
-      const result = (plugin as any).comparePropertyValues('Engineering', ['Engineering', 'Product', 'Design']);
+      const result = (plugin.entityScanner as any).comparePropertyValues('Engineering', ['Engineering', 'Product', 'Design']);
       expect(result).toBe(true);
     });
 
     test('should not match if value not in array', () => {
-      const result = (plugin as any).comparePropertyValues('Marketing', ['Engineering', 'Product', 'Design']);
+      const result = (plugin.entityScanner as any).comparePropertyValues('Marketing', ['Engineering', 'Product', 'Design']);
       expect(result).toBe(false);
     });
   });
 
   describe('Link Matching', () => {
     test('should identify Obsidian links correctly', () => {
-      expect((plugin as any).isObsidianLink('[[person]]')).toBe(true);
-      expect((plugin as any).isObsidianLink('[[atlas/entities/person.md|person]]')).toBe(true);
-      expect((plugin as any).isObsidianLink('regular text')).toBe(false);
-      expect((plugin as any).isObsidianLink('[regular markdown link](url)')).toBe(false);
+      expect((plugin.entityScanner as any).isObsidianLink('[[person]]')).toBe(true);
+      expect((plugin.entityScanner as any).isObsidianLink('[[atlas/entities/person.md|person]]')).toBe(true);
+      expect((plugin.entityScanner as any).isObsidianLink('regular text')).toBe(false);
+      expect((plugin.entityScanner as any).isObsidianLink('[regular markdown link](url)')).toBe(false);
     });
 
     test('should extract link paths correctly', () => {
-      expect((plugin as any).extractLinkPath('[[person]]')).toBe('person');
-      expect((plugin as any).extractLinkPath('[[atlas/entities/person.md|person]]')).toBe('atlas/entities/person.md');
-      expect((plugin as any).extractLinkPath('regular text')).toBe('regular text');
+      expect((plugin.entityScanner as any).extractLinkPath('[[person]]')).toBe('person');
+      expect((plugin.entityScanner as any).extractLinkPath('[[atlas/entities/person.md|person]]')).toBe('atlas/entities/person.md');
+      expect((plugin.entityScanner as any).extractLinkPath('regular text')).toBe('regular text');
     });
 
     test('should match links that resolve to same file', () => {
-      const result = (plugin as any).compareLinksUsingAPI('[[person]]', '[[atlas/entities/person.md|person]]');
+      const result = (plugin.entityScanner as any).compareLinksUsingAPI('[[person]]', '[[atlas/entities/person.md|person]]');
       expect(result).toBe(true);
     });
 
     test('should match link variations', () => {
       const file = new TFile('atlas/entities/person.md');
       
-      expect((plugin as any).compareFilePathWithString(file, 'person')).toBe(true);
-      expect((plugin as any).compareFilePathWithString(file, 'person.md')).toBe(true);
-      expect((plugin as any).compareFilePathWithString(file, 'atlas/entities/person')).toBe(true);
-      expect((plugin as any).compareFilePathWithString(file, 'atlas/entities/person.md')).toBe(true);
+      expect((plugin.entityScanner as any).compareFilePathWithString(file, 'person')).toBe(true);
+      expect((plugin.entityScanner as any).compareFilePathWithString(file, 'person.md')).toBe(true);
+      expect((plugin.entityScanner as any).compareFilePathWithString(file, 'atlas/entities/person')).toBe(true);
+      expect((plugin.entityScanner as any).compareFilePathWithString(file, 'atlas/entities/person.md')).toBe(true);
     });
   });
 
@@ -156,7 +162,7 @@ describe('Schema Matching', () => {
       const schema = testSchemas[0]; // Person schema
       const frontmatter = { name: 'John Doe' }; // Missing 'is' property
       
-      const missing = (plugin as any).getMissingProperties(frontmatter, schema);
+      const missing = (plugin.entityScanner as any).getMissingProperties(frontmatter, schema);
       
       expect(missing).toContain('is');
       expect(missing).not.toContain('name');
@@ -167,7 +173,7 @@ describe('Schema Matching', () => {
       const schema = testSchemas[0]; // Person schema
       const frontmatter = testFrontmatter.validPersonEntity;
       
-      const missing = (plugin as any).getMissingProperties(frontmatter, schema);
+      const missing = (plugin.entityScanner as any).getMissingProperties(frontmatter, schema);
       
       expect(missing).toEqual([]);
     });
@@ -180,7 +186,7 @@ describe('Schema Matching', () => {
         // Missing optional properties: role, team, email
       };
       
-      const missing = (plugin as any).getMissingProperties(frontmatter, schema);
+      const missing = (plugin.entityScanner as any).getMissingProperties(frontmatter, schema);
       
       expect(missing).toEqual([]);
     });

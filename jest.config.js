@@ -9,6 +9,7 @@ module.exports = {
 	moduleFileExtensions: ['ts', 'js'],
 	collectCoverageFrom: [
 		'main.ts',
+		'src/**/*.ts',
 		'!**/*.d.ts',
 	],
 	coverageReporters: ['text', 'lcov', 'html'],

@@ -1,5 +1,8 @@
 import { App } from '../mocks/obsidian-api';
 import EntitySchemaPlugin from '../../main';
+import { SchemaManager } from '../../src/schema-manager';
+import { EntityScanner } from '../../src/entity-scanner';
+import { BulkOperations } from '../../src/bulk-operations';
 
 describe('Settings Management', () => {
   let app: App;
@@ -8,7 +11,11 @@ describe('Settings Management', () => {
   beforeEach(async () => {
     app = new App();
     plugin = new EntitySchemaPlugin(app, {} as any);
-    await plugin.initializeForTesting();
+    await plugin.loadSettings();
+    plugin.schemaManager = new SchemaManager(app);
+    plugin.entityScanner = new EntityScanner(app);
+    plugin.bulkOperations = new BulkOperations(app, () => plugin.settings);
+    plugin.settings.schemas = await plugin.schemaManager.loadSchemas();
   });
 
   describe('Default Settings', () => {
