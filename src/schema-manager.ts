@@ -1,5 +1,5 @@
 import { App, Notice } from 'obsidian';
-import { EntitySchema, EntitySchemaSettings, SchemaSource } from './types';
+import { EntitySchema, SchemaSource } from './types';
 
 export class SchemaManager {
 	private app: App;
@@ -124,7 +124,7 @@ export class SchemaManager {
 	/**
 	 * Validate schema structure
 	 */
-	private validateSchemas(schemas: any): schemas is EntitySchema[] {
+	private validateSchemas(schemas: unknown): schemas is EntitySchema[] {
 		if (!Array.isArray(schemas)) {
 			return false;
 		}
@@ -144,7 +144,7 @@ export class SchemaManager {
 	/**
 	 * Validate properties structure
 	 */
-	private validateProperties(properties: any): boolean {
+	private validateProperties(properties: unknown): boolean {
 		if (typeof properties !== 'object' || properties === null) {
 			return false;
 		}
@@ -162,7 +162,7 @@ export class SchemaManager {
 	/**
 	 * Validate match criteria structure
 	 */
-	private validateMatchCriteria(criteria: any): boolean {
+	private validateMatchCriteria(criteria: unknown): boolean {
 		if (typeof criteria !== 'object' || criteria === null) {
 			return false;
 		}

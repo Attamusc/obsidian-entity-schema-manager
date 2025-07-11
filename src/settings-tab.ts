@@ -1,12 +1,13 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
-import { EntitySchema, EntitySchemaSettings, SchemaSource } from './types';
+import { EntitySchema } from './types';
 import { SchemaManager } from './schema-manager';
+import type EntitySchemaPlugin from '../main';
 
 export class EntitySchemaSettingTab extends PluginSettingTab {
-	private plugin: any; // Will be properly typed when we refactor main.ts
+	private plugin: EntitySchemaPlugin;
 	private schemaManager: SchemaManager;
 
-	constructor(app: App, plugin: any, schemaManager: SchemaManager) {
+	constructor(app: App, plugin: EntitySchemaPlugin, schemaManager: SchemaManager) {
 		super(app, plugin);
 		this.plugin = plugin;
 		this.schemaManager = schemaManager;

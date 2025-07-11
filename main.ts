@@ -1,5 +1,5 @@
-import { App, Plugin, Notice } from 'obsidian';
-import { EntitySchema, EntityInstance, EntitySchemaSettings } from './src/types';
+import { Plugin, Notice } from 'obsidian';
+import { EntityInstance, EntitySchemaSettings } from './src/types';
 import { SchemaManager } from './src/schema-manager';
 import { EntityScanner } from './src/entity-scanner';
 import { BulkOperations } from './src/bulk-operations';
@@ -125,9 +125,9 @@ export default class EntitySchemaPlugin extends Plugin {
 		modal.open();
 	}
 
-	async addPropertyToEntityType(entityTypeName: string, propertyName: string, defaultValue: any) {
+	async addPropertyToEntityType(entityTypeName: string, propertyName: string, defaultValue: unknown) {
 		const targetEntities = this.entityScanner.getEntitiesByType(entityTypeName);
-		
+
 		if (targetEntities.length === 0) {
 			new Notice(`No entities found for type: ${entityTypeName}`);
 			return;
@@ -144,9 +144,9 @@ export default class EntitySchemaPlugin extends Plugin {
 		modal.open();
 	}
 
-	async performBulkPropertyAddition(entities: EntityInstance[], propertyName: string, defaultValue: any) {
+	async performBulkPropertyAddition(entities: EntityInstance[], propertyName: string, defaultValue: unknown) {
 		const result = await this.bulkOperations.performBulkPropertyAddition(entities, propertyName, defaultValue);
-		
+
 		// Rescan entities to update our cache
 		await this.scanEntities();
 		return result;

@@ -16,7 +16,7 @@ export class BulkOperations {
 	async performBulkPropertyAddition(
 		entities: EntityInstance[], 
 		propertyName: string, 
-		defaultValue: any
+		defaultValue: unknown
 	): Promise<{ success: number; errors: number }> {
 		const settings = this.getSettings();
 		if (settings.backupBeforeOperations) {
@@ -59,7 +59,7 @@ export class BulkOperations {
 	/**
 	 * Add a property to the frontmatter of a file's content
 	 */
-	addPropertyToFrontmatter(content: string, propertyName: string, defaultValue: any): string {
+	addPropertyToFrontmatter(content: string, propertyName: string, defaultValue: unknown): string {
 		const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
 		const match = content.match(frontmatterRegex);
 		
@@ -79,7 +79,7 @@ export class BulkOperations {
 	/**
 	 * Format a value for YAML frontmatter
 	 */
-	formatValue(value: any): string {
+	formatValue(value: unknown): string {
 		if (typeof value === 'string') {
 			return `"${value}"`;
 		} else if (Array.isArray(value)) {

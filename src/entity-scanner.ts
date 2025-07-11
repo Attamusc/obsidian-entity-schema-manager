@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from 'obsidian';
-import { EntitySchema, EntityInstance, MatchCriteria } from './types';
+import { EntitySchema, EntityInstance } from './types';
 
 export class EntityScanner {
 	private app: App;
@@ -63,7 +63,7 @@ export class EntityScanner {
 	/**
 	 * Check if a file matches a given schema
 	 */
-	private matchesSchema(file: TFile, frontmatter: any, schema: EntitySchema): boolean {
+	private matchesSchema(file: TFile, frontmatter: Record<string, unknown>, schema: EntitySchema): boolean {
 		const criteria = schema.matchCriteria;
 		
 		// Check required properties
@@ -81,7 +81,7 @@ export class EntityScanner {
 		// Check tag pattern
 		if (criteria.tagPattern && frontmatter.tags) {
 			const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
-			if (!tags.some((tag: string) => tag.includes(criteria.tagPattern!))) return false;
+			if (!tags.some((tag: string) => tag.includes(criteria.tagPattern))) return false;
 		}
 
 		// Check name pattern
@@ -106,7 +106,7 @@ export class EntityScanner {
 	/**
 	 * Compare property values with support for links, arrays, and case-insensitive strings
 	 */
-	private comparePropertyValues(actualValue: any, expectedValue: any): boolean {
+	private comparePropertyValues(actualValue: unknown, expectedValue: unknown): boolean {
 		// Handle arrays of expected values (OR logic)
 		if (Array.isArray(expectedValue)) {
 			return expectedValue.some(expected => this.comparePropertyValues(actualValue, expected));
@@ -218,7 +218,7 @@ export class EntityScanner {
 	/**
 	 * Get missing properties for an entity based on its schema
 	 */
-	private getMissingProperties(frontmatter: any, schema: EntitySchema): string[] {
+	private getMissingProperties(frontmatter: Record<string, unknown>, schema: EntitySchema): string[] {
 		const missing: string[] = [];
 		
 		// Check required properties defined in schema.properties

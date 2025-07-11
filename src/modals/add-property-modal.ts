@@ -9,7 +9,7 @@ export class AddPropertyModal extends Modal {
 	constructor(
 		app: App,
 		private schemas: EntitySchema[],
-		private onAdd: (entityType: string, property: string, defaultValue: any) => void
+		private onAdd: (entityType: string, property: string, defaultValue: unknown) => void
 	) {
 		super(app);
 	}
@@ -57,7 +57,7 @@ export class AddPropertyModal extends Modal {
 			return;
 		}
 
-		let defaultValue: any = defaultValueStr;
+		let defaultValue: unknown = defaultValueStr;
 		
 		// Try to parse as JSON for complex values
 		if (defaultValueStr.startsWith('[') || defaultValueStr.startsWith('{')) {

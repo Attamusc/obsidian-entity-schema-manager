@@ -199,7 +199,7 @@ Content here.`);
 		});
 
 		test('should handle non-existent entity type', async () => {
-			const { Notice } = require('../mocks/obsidian-api');
+			const { Notice } = await import('../mocks/obsidian-api');
 
 			await plugin.addPropertyToEntityType('NonExistentType', 'prop', 'value');
 

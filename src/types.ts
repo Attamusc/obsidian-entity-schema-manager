@@ -10,7 +10,7 @@ export interface EntitySchema {
 export interface PropertyDefinition {
 	type: 'string' | 'number' | 'boolean' | 'array' | 'object';
 	required?: boolean;
-	defaultValue?: any;
+	defaultValue?: unknown;
 	description?: string;
 }
 
@@ -19,13 +19,13 @@ export interface MatchCriteria {
 	folderPath?: string;
 	tagPattern?: string;
 	namePattern?: string;
-	propertyValues?: Record<string, any>;
+	propertyValues?: Record<string, unknown>;
 }
 
 export interface EntityInstance {
 	file: TFile;
 	entityType: string;
-	properties: Record<string, any>;
+	properties: Record<string, unknown>;
 	missingProperties: string[];
 }
 
