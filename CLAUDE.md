@@ -10,9 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run version` - Update version numbers in manifest.json and versions.json
 
 ### Linting
-- ESLint is configured with TypeScript support
-- Configuration in `.eslintrc` with TypeScript-specific rules
-- No specific lint command in package.json - use `npx eslint .` if needed
+- **ESLint** is configured with TypeScript support and modern rules
+- Configuration in `.eslintrc` with TypeScript-specific rules and project-specific ignores
+- **Commands:**
+  - `npm run lint` - Run ESLint on all TypeScript files
+  - `npm run lint:fix` - Auto-fix ESLint issues where possible
+- **Integration:** Linting runs automatically as part of the build process
+- **Standards:** Source files use `unknown` instead of `any` for type safety
 
 ## Architecture Overview
 

@@ -153,8 +153,8 @@ export class SchemaManager {
 			return (
 				typeof prop === 'object' &&
 				prop !== null &&
-				typeof (prop as any).type === 'string' &&
-				['string', 'number', 'boolean', 'array', 'object'].includes((prop as any).type)
+				typeof (prop as Record<string, unknown>).type === 'string' &&
+				['string', 'number', 'boolean', 'array', 'object'].includes((prop as Record<string, unknown>).type as string)
 			);
 		});
 	}
@@ -167,20 +167,22 @@ export class SchemaManager {
 			return false;
 		}
 
+		const criteriaObj = criteria as Record<string, unknown>;
+
 		// All properties are optional, so we just check types if they exist
-		if (criteria.requiredProperties && !Array.isArray(criteria.requiredProperties)) {
+		if (criteriaObj.requiredProperties && !Array.isArray(criteriaObj.requiredProperties)) {
 			return false;
 		}
-		if (criteria.folderPath && typeof criteria.folderPath !== 'string') {
+		if (criteriaObj.folderPath && typeof criteriaObj.folderPath !== 'string') {
 			return false;
 		}
-		if (criteria.tagPattern && typeof criteria.tagPattern !== 'string') {
+		if (criteriaObj.tagPattern && typeof criteriaObj.tagPattern !== 'string') {
 			return false;
 		}
-		if (criteria.namePattern && typeof criteria.namePattern !== 'string') {
+		if (criteriaObj.namePattern && typeof criteriaObj.namePattern !== 'string') {
 			return false;
 		}
-		if (criteria.propertyValues && typeof criteria.propertyValues !== 'object') {
+		if (criteriaObj.propertyValues && typeof criteriaObj.propertyValues !== 'object') {
 			return false;
 		}
 

@@ -81,7 +81,7 @@ export class EntityScanner {
 		// Check tag pattern
 		if (criteria.tagPattern && frontmatter.tags) {
 			const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
-			if (!tags.some((tag: string) => tag.includes(criteria.tagPattern))) return false;
+			if (!tags.some((tag: string) => tag.includes(criteria.tagPattern!))) return false;
 		}
 
 		// Check name pattern
