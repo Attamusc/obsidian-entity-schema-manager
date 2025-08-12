@@ -9,3 +9,13 @@ global.console = {
   error: jest.fn(),
   warn: jest.fn(),
 };
+
+// Mock window object for browser API tests
+Object.defineProperty(global, 'window', {
+  value: {
+    // Mock the Entity Schema Manager API namespace
+    'entity-schema-manager.api.v1': undefined,
+  },
+  writable: true,
+  configurable: true,
+});

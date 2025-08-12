@@ -11,8 +11,11 @@ import {
 	BulkOperationPreviewModal,
 	EntityDashboardModal
 } from './src/modals';
+import { EntitySchemaAPIService } from './src/api-service';
+import { EntitySchemaAPI } from './src/api';
 
 export type { EntitySchema } from './src/types';
+export type { EntitySchemaAPI } from './src/api';
 
 const DEFAULT_SETTINGS: EntitySchemaSettings = {
 	schemas: [], // Schemas will be loaded by SchemaManager
@@ -25,6 +28,8 @@ export default class EntitySchemaPlugin extends Plugin {
 	schemaManager: SchemaManager;
 	entityScanner: EntityScanner;
 	bulkOperations: BulkOperations;
+	apiService: EntitySchemaAPIService;
+	api: EntitySchemaAPI;
 	static DEFAULT_SETTINGS = DEFAULT_SETTINGS;
 
 	async onload() {
@@ -35,9 +40,19 @@ export default class EntitySchemaPlugin extends Plugin {
 		this.entityScanner = new EntityScanner(this.app);
 		this.bulkOperations = new BulkOperations(this.app, () => this.settings);
 
+		// Initialize API service
+		this.apiService = new EntitySchemaAPIService(this.entityScanner, this.schemaManager);
+		this.api = this.apiService;
+
 		// Load schemas
 		this.settings.schemas = await this.schemaManager.loadSchemas();
 		await this.saveSettings();
+
+		// Update API service with loaded schemas
+		this.apiService.updateSchemas(this.settings.schemas);
+
+		// Register API for inter-plugin communication
+		this.registerAPI();
 
 		// Add ribbon icon
 		this.addRibbonIcon('database', 'Entity Schema Manager', () => {
@@ -98,6 +113,10 @@ export default class EntitySchemaPlugin extends Plugin {
 
 	async scanEntities() {
 		await this.entityScanner.scanEntities(this.settings.schemas);
+		// Update API cache after scanning
+		if (this.apiService) {
+			this.apiService.updateSchemas(this.settings.schemas);
+		}
 	}
 
 
@@ -156,6 +175,10 @@ export default class EntitySchemaPlugin extends Plugin {
 		this.settings.schemas = await this.schemaManager.reloadSchemas();
 		await this.saveSettings();
 		await this.scanEntities();
+		// Update API cache after reloading schemas
+		if (this.apiService) {
+			this.apiService.updateSchemas(this.settings.schemas);
+		}
 		new Notice('Entity schemas reloaded');
 	}
 
@@ -164,5 +187,41 @@ export default class EntitySchemaPlugin extends Plugin {
 		if (success) {
 			new Notice('Entity schemas exported to entity-schemas.json');
 		}
+	}
+
+	/**
+	 * Register API for inter-plugin communication
+	 */
+	private registerAPI() {
+		// Method 1: Global namespace (primary method)
+		window['entity-schema-manager.api.v1'] = this.api;
+		
+		// Method 2: Plugin registry (fallback method)
+		// Make the API available via app.plugins.plugins["entity-schema-manager"].api
+		(this as unknown as { api: EntitySchemaAPI }).api = this.api;
+		
+		console.log('Entity Schema Manager: API registered for inter-plugin communication');
+	}
+
+	/**
+	 * Unregister API during plugin unload
+	 */
+	private unregisterAPI() {
+		// Clean up global namespace
+		if (window['entity-schema-manager.api.v1'] === this.api) {
+			delete window['entity-schema-manager.api.v1'];
+		}
+		
+		// Clean up plugin registry
+		delete (this as unknown as { api?: EntitySchemaAPI }).api;
+		
+		console.log('Entity Schema Manager: API unregistered');
+	}
+
+	/**
+	 * Plugin unload cleanup
+	 */
+	onunload() {
+		this.unregisterAPI();
 	}
 }

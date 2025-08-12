@@ -49,27 +49,27 @@ export class Vault {
     this.fileContents.set(file.path, content);
   }
 
-  getMarkdownFiles(): TFile[] {
+  getMarkdownFiles = jest.fn(() => {
     return this.files.filter(f => f.extension === 'md');
-  }
+  });
 
-  async read(file: TFile): Promise<string> {
+  read = jest.fn(async (file: TFile): Promise<string> => {
     return this.fileContents.get(file.path) || '';
-  }
+  });
 
-  async modify(file: TFile, content: string): Promise<void> {
+  modify = jest.fn(async (file: TFile, content: string): Promise<void> => {
     this.fileContents.set(file.path, content);
-  }
+  });
 
-  async create(path: string, content: string): Promise<TFile> {
+  create = jest.fn(async (path: string, content: string): Promise<TFile> => {
     const file = new TFile(path);
     this.addFile(file, content);
     return file;
-  }
+  });
 
-  async createFolder(path: string): Promise<void> {
+  createFolder = jest.fn(async (path: string): Promise<void> => {
     // Mock implementation - in real Obsidian this creates a folder
-  }
+  });
 
   adapter = {
     exists: jest.fn().mockResolvedValue(true),
@@ -112,6 +112,9 @@ export class Setting {
   addText = jest.fn().mockReturnThis();
   addDropdown = jest.fn().mockReturnThis();
 }
+
+// Export App as MockApp for backward compatibility with existing tests
+export { App as MockApp };
 
 export class Modal {
   app: App;

@@ -128,3 +128,20 @@ missing closing quote: "bad
 
 Content here.`
 };
+
+// Helper function to create mock TFile objects for testing
+import { TFile } from '../mocks/obsidian-api';
+
+export function createMockTFile(path: string, frontmatter: Record<string, unknown>): TFile {
+  const mockFile = new TFile(path);
+  
+  // Mock the metadata cache entry for this file
+  const mockMetadata = {
+    frontmatter: frontmatter
+  };
+  
+  // Store metadata for later retrieval in mock
+  (mockFile as any).mockMetadata = mockMetadata;
+  
+  return mockFile;
+}
