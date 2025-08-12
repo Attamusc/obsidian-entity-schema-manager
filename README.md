@@ -2,6 +2,14 @@
 
 A powerful Obsidian plugin that helps you manage entity schemas and perform bulk operations on note properties. Perfect for maintaining consistent metadata across your entity-based note-taking system.
 
+## 📚 Documentation
+
+- **[📖 User Guide](README.md)** - Complete setup and usage guide (this document)
+- **[🔧 API Documentation](docs/API.md)** - Developer interface reference
+- **[🏗️ Architecture Guide](docs/ARCHITECTURE.md)** - System design and structure
+- **[📋 Documentation Index](docs/INDEX.md)** - Complete project documentation index
+- **[🤖 Development Guide](CLAUDE.md)** - Claude Code integration instructions
+
 ## Features
 
 - **Entity Type Management**: Define and manage different types of entities (Person, Team, Project, etc.)

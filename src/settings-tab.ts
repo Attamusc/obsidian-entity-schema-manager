@@ -27,6 +27,9 @@ export class EntitySchemaSettingTab extends PluginSettingTab {
 
 		// Current schemas display
 		this.addCurrentSchemasSection(containerEl);
+
+		// Discovered entities preview
+		this.addDiscoveredEntitiesSection(containerEl);
 	}
 
 	private addSchemaManagementSection(containerEl: HTMLElement): void {
@@ -123,7 +126,7 @@ export class EntitySchemaSettingTab extends PluginSettingTab {
 		}
 
 		// Schema list
-		this.plugin.settings.schemas.forEach((schema: EntitySchema, index: number) => {
+		this.plugin.settings.schemas.forEach((schema: EntitySchema) => {
 			const schemaDiv = containerEl.createDiv();
 			schemaDiv.style.border = '1px solid var(--background-modifier-border)';
 			schemaDiv.style.borderRadius = '5px';
@@ -165,6 +168,166 @@ export class EntitySchemaSettingTab extends PluginSettingTab {
 				item.createEl('span', { text: 'Property Values: ' });
 				item.createEl('code', { text: JSON.stringify(schema.matchCriteria.propertyValues) });
 			}
+		});
+	}
+
+	private addDiscoveredEntitiesSection(containerEl: HTMLElement): void {
+		containerEl.createEl('h3', { text: 'Discovered Entities Preview' });
+
+		// Header with scan info and refresh button
+		const headerDiv = containerEl.createDiv();
+		headerDiv.style.display = 'flex';
+		headerDiv.style.justifyContent = 'space-between';
+		headerDiv.style.alignItems = 'center';
+		headerDiv.style.marginBottom = '15px';
+
+		const infoDiv = headerDiv.createDiv();
+		const lastScanTime = this.plugin.entityScanner.getLastScanTime();
+		const totalEntities = this.plugin.entityScanner.getEntityInstances().length;
+		
+		infoDiv.createEl('p', { 
+			text: `Total entities found: ${totalEntities}`,
+			attr: { style: 'margin: 0; font-weight: bold;' }
+		});
+		
+		if (lastScanTime) {
+			infoDiv.createEl('p', { 
+				text: `Last scan: ${lastScanTime.toLocaleString()}`,
+				attr: { style: 'margin: 0; font-size: 0.9em; color: var(--text-muted);' }
+			});
+		}
+
+		// Refresh button
+		const refreshButton = headerDiv.createEl('button', { text: 'Refresh' });
+		refreshButton.addEventListener('click', async () => {
+			refreshButton.disabled = true;
+			refreshButton.textContent = 'Scanning...';
+			
+			try {
+				await this.plugin.scanEntities();
+				this.display(); // Refresh the entire settings display
+			} finally {
+				refreshButton.disabled = false;
+				refreshButton.textContent = 'Refresh';
+			}
+		});
+
+		// Group entities by type
+		const entitiesByType = this.plugin.entityScanner.getEntitiesGroupedByType();
+		const entityTypes = Object.keys(entitiesByType).sort();
+
+		if (entityTypes.length === 0) {
+			const noEntitiesDiv = containerEl.createDiv();
+			noEntitiesDiv.style.textAlign = 'center';
+			noEntitiesDiv.style.padding = '20px';
+			noEntitiesDiv.style.color = 'var(--text-muted)';
+			noEntitiesDiv.createEl('p', { text: 'No entities discovered yet.' });
+			noEntitiesDiv.createEl('p', { text: 'Click "Refresh" to scan for entities.' });
+			return;
+		}
+
+		// Create collapsible sections for each entity type
+		entityTypes.forEach(entityType => {
+			const entities = entitiesByType[entityType];
+			const validEntities = entities.filter(e => e.missingProperties.length === 0).length;
+			const invalidEntities = entities.length - validEntities;
+
+			// Entity type header (collapsible)
+			const typeDiv = containerEl.createDiv();
+			typeDiv.style.border = '1px solid var(--background-modifier-border)';
+			typeDiv.style.borderRadius = '5px';
+			typeDiv.style.marginBottom = '10px';
+
+			const headerButton = typeDiv.createEl('button');
+			headerButton.style.width = '100%';
+			headerButton.style.padding = '10px 15px';
+			headerButton.style.background = 'var(--background-secondary)';
+			headerButton.style.border = 'none';
+			headerButton.style.borderRadius = '5px 5px 0 0';
+			headerButton.style.cursor = 'pointer';
+			headerButton.style.textAlign = 'left';
+			headerButton.style.display = 'flex';
+			headerButton.style.justifyContent = 'space-between';
+			headerButton.style.alignItems = 'center';
+
+			const titleSpan = headerButton.createSpan();
+			titleSpan.createEl('strong', { text: entityType });
+			titleSpan.createEl('span', { text: ` (${entities.length} files)` });
+
+			const statusSpan = headerButton.createSpan();
+			statusSpan.style.fontSize = '0.9em';
+			if (invalidEntities > 0) {
+				statusSpan.createEl('span', { 
+					text: `✓ ${validEntities} `,
+					attr: { style: 'color: var(--text-success);' }
+				});
+				statusSpan.createEl('span', { 
+					text: `⚠ ${invalidEntities}`,
+					attr: { style: 'color: var(--text-warning);' }
+				});
+			} else {
+				statusSpan.createEl('span', { 
+					text: `✓ All valid`,
+					attr: { style: 'color: var(--text-success);' }
+				});
+			}
+
+			const expandIcon = headerButton.createSpan({ text: '▼' });
+			expandIcon.style.fontSize = '0.8em';
+
+			// Entity list (initially hidden)
+			const entityListDiv = typeDiv.createDiv();
+			entityListDiv.style.display = 'none';
+			entityListDiv.style.padding = '0 15px 15px 15px';
+
+			// Toggle functionality
+			let isExpanded = false;
+			headerButton.addEventListener('click', () => {
+				isExpanded = !isExpanded;
+				entityListDiv.style.display = isExpanded ? 'block' : 'none';
+				expandIcon.textContent = isExpanded ? '▲' : '▼';
+			});
+
+			// Populate entity list
+			entities.forEach(entity => {
+				const entityDiv = entityListDiv.createDiv();
+				entityDiv.style.padding = '8px 0';
+				entityDiv.style.borderBottom = '1px solid var(--background-modifier-border-hover)';
+
+				// File name (clickable)
+				const fileLink = entityDiv.createEl('a');
+				fileLink.textContent = entity.file.name;
+				fileLink.style.fontWeight = 'bold';
+				fileLink.style.cursor = 'pointer';
+				fileLink.style.textDecoration = 'none';
+				fileLink.addEventListener('click', (e) => {
+					e.preventDefault();
+					this.app.workspace.openLinkText(entity.file.path, '', false);
+				});
+
+				// File path
+				const pathDiv = entityDiv.createDiv();
+				pathDiv.style.fontSize = '0.85em';
+				pathDiv.style.color = 'var(--text-muted)';
+				pathDiv.textContent = entity.file.path;
+
+				// Validation status
+				const statusDiv = entityDiv.createDiv();
+				statusDiv.style.fontSize = '0.85em';
+				statusDiv.style.marginTop = '4px';
+
+				if (entity.missingProperties.length === 0) {
+					statusDiv.createEl('span', { 
+						text: '✓ Valid',
+						attr: { style: 'color: var(--text-success);' }
+					});
+				} else {
+					statusDiv.createEl('span', { 
+						text: `⚠ Missing: ${entity.missingProperties.join(', ')}`,
+						attr: { style: 'color: var(--text-warning);' }
+					});
+				}
+			});
 		});
 	}
 }

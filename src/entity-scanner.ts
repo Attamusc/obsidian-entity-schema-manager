@@ -4,6 +4,7 @@ import { EntitySchema, EntityInstance } from './types';
 export class EntityScanner {
 	private app: App;
 	private entityInstances: EntityInstance[] = [];
+	private lastScanTime: Date | null = null;
 
 	constructor(app: App) {
 		this.app = app;
@@ -15,9 +16,10 @@ export class EntityScanner {
 	async scanEntities(schemas: EntitySchema[]): Promise<EntityInstance[]> {
 		console.log('Entity Schema Manager: Starting entity scan...');
 		this.entityInstances = [];
+		this.lastScanTime = new Date();
 		const files = this.app.vault.getMarkdownFiles();
 		console.log(`Entity Schema Manager: Found ${files.length} markdown files to scan`);
-		
+
 		for (const file of files) {
 			const metadata = this.app.metadataCache.getFileCache(file);
 			if (!metadata?.frontmatter) {
@@ -65,7 +67,7 @@ export class EntityScanner {
 	 */
 	private matchesSchema(file: TFile, frontmatter: Record<string, unknown>, schema: EntitySchema): boolean {
 		const criteria = schema.matchCriteria;
-		
+
 		// Check required properties
 		if (criteria.requiredProperties) {
 			for (const prop of criteria.requiredProperties) {
@@ -93,7 +95,7 @@ export class EntityScanner {
 		if (criteria.propertyValues) {
 			for (const [propName, expectedValue] of Object.entries(criteria.propertyValues)) {
 				const actualValue = frontmatter[propName];
-				
+
 				if (!this.comparePropertyValues(actualValue, expectedValue)) {
 					return false;
 				}
@@ -194,23 +196,23 @@ export class EntityScanner {
 	private compareFilePathWithString(file: TFile, compareString: string): boolean {
 		const compareLower = compareString.toLowerCase();
 		const extractedPath = this.extractLinkPath(compareString).toLowerCase();
-		
+
 		// Compare with full path
 		if (file.path.toLowerCase() === compareLower || file.path.toLowerCase() === extractedPath) {
 			return true;
 		}
-		
+
 		// Compare with basename (filename without extension)
 		const basename = file.basename.toLowerCase();
 		if (basename === compareLower || basename === extractedPath) {
 			return true;
 		}
-		
+
 		// Compare with name (filename with extension)
 		if (file.name.toLowerCase() === compareLower || file.name.toLowerCase() === extractedPath) {
 			return true;
 		}
-		
+
 		// Check if the compare string is contained in the file path (for partial matches)
 		return file.path.toLowerCase().includes(extractedPath);
 	}
@@ -220,14 +222,14 @@ export class EntityScanner {
 	 */
 	private getMissingProperties(frontmatter: Record<string, unknown>, schema: EntitySchema): string[] {
 		const missing: string[] = [];
-		
+
 		// Check required properties defined in schema.properties
 		for (const [propName, propDef] of Object.entries(schema.properties)) {
 			if (propDef.required && !(propName in frontmatter)) {
 				missing.push(propName);
 			}
 		}
-		
+
 		// Also check required properties defined in matchCriteria.requiredProperties
 		if (schema.matchCriteria.requiredProperties) {
 			for (const propName of schema.matchCriteria.requiredProperties) {
@@ -236,7 +238,7 @@ export class EntityScanner {
 				}
 			}
 		}
-		
+
 		return missing;
 	}
 
@@ -276,5 +278,25 @@ export class EntityScanner {
 	 */
 	getEntitiesByType(entityType: string): EntityInstance[] {
 		return this.entityInstances.filter(e => e.entityType === entityType);
+	}
+
+	/**
+	 * Get the last scan time
+	 */
+	getLastScanTime(): Date | null {
+		return this.lastScanTime;
+	}
+
+	/**
+	 * Get entities grouped by type with counts
+	 */
+	getEntitiesGroupedByType(): Record<string, EntityInstance[]> {
+		return this.entityInstances.reduce((groups, entity) => {
+			if (!groups[entity.entityType]) {
+				groups[entity.entityType] = [];
+			}
+			groups[entity.entityType].push(entity);
+			return groups;
+		}, {} as Record<string, EntityInstance[]>);
 	}
 }
