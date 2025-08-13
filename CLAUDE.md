@@ -6,8 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Build and Development
 - `npm run dev` - Start development mode with file watching using esbuild
+- `npm run dev:vault` - **Development mode for test vault** - Builds directly into test-vault plugin directory with hot reload support
+- `npm run dev:install` - One-time setup to copy plugin files to test vault
 - `npm run build` - Build for production with TypeScript checking and minification
 - `npm run version` - Update version numbers in manifest.json and versions.json
+
+#### Hot Reload Development Workflow
+For the best development experience when testing changes in the test vault:
+
+1. **One-time setup**: The hot-reload plugin is already installed in `test-vault/.obsidian/plugins/hot-reload/`
+2. **Start development**: Run `npm run dev:vault` to build and watch for changes
+3. **Open test vault**: Open the `test-vault` directory in Obsidian
+4. **Enable plugins**: Enable both "Hot Reload" and "Obsidian Entity Schema Manager" plugins in Obsidian settings
+5. **Develop**: Make changes to your TypeScript code - they'll automatically build and reload in the test vault within ~1 second
+
+The `dev:vault` command automatically:
+- Builds `main.js` directly into the test vault plugin directory
+- Copies `manifest.json` and `styles.css` when they change
+- Maintains the `.hotreload` file for plugin detection
+- Watches all source files for changes
 
 ### Linting
 - **ESLint** is configured with TypeScript support and modern rules

@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import fs from "fs";
+import path from "path";
 
 const banner =
 `/*
@@ -10,6 +12,18 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+const vault = (process.argv[2] === "vault");
+
+// Define output paths
+const VAULT_PLUGIN_DIR = "./test-vault/.obsidian/plugins/obsidian-entity-schema-manager";
+const outputFile = vault ? path.join(VAULT_PLUGIN_DIR, "main.js") : "main.js";
+
+// Ensure vault plugin directory exists if building for vault
+if (vault) {
+	if (!fs.existsSync(VAULT_PLUGIN_DIR)) {
+		fs.mkdirSync(VAULT_PLUGIN_DIR, { recursive: true });
+	}
+}
 
 const context = await esbuild.context({
 	banner: {
@@ -37,13 +51,58 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: "main.js",
+	outfile: outputFile,
 	minify: prod,
 });
+
+// Function to copy additional files for vault mode
+function copyVaultFiles() {
+	if (vault) {
+		// Copy manifest.json
+		if (fs.existsSync("./manifest.json")) {
+			fs.copyFileSync("./manifest.json", path.join(VAULT_PLUGIN_DIR, "manifest.json"));
+		}
+		
+		// Copy styles.css if it exists
+		if (fs.existsSync("./styles.css")) {
+			fs.copyFileSync("./styles.css", path.join(VAULT_PLUGIN_DIR, "styles.css"));
+		}
+		
+		// Ensure .hotreload file exists for hot-reload plugin detection
+		const hotreloadFile = path.join(VAULT_PLUGIN_DIR, ".hotreload");
+		if (!fs.existsSync(hotreloadFile)) {
+			fs.writeFileSync(hotreloadFile, "");
+		}
+		
+		console.log("Files copied to test vault plugin directory");
+	}
+}
 
 if (prod) {
 	await context.rebuild();
 	process.exit(0);
+} else if (vault) {
+	// Build once and copy files
+	await context.rebuild();
+	copyVaultFiles();
+	
+	// Watch for changes and rebuild + copy
+	await context.watch();
+	
+	// Set up file watchers for manifest.json and styles.css
+	if (fs.existsSync("./manifest.json")) {
+		fs.watchFile("./manifest.json", () => {
+			console.log("manifest.json changed, copying to vault...");
+			copyVaultFiles();
+		});
+	}
+	
+	if (fs.existsSync("./styles.css")) {
+		fs.watchFile("./styles.css", () => {
+			console.log("styles.css changed, copying to vault...");
+			copyVaultFiles();
+		});
+	}
 } else {
 	await context.watch();
 }
