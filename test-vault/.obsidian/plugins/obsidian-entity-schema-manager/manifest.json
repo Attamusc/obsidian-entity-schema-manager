@@ -1,9 +1,9 @@
 {
 	"id": "entity-schema-manager",
 	"name": "Entity Schema Manager",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Manage entity schemas and perform bulk operations on note properties",
+	"description": "Manage entity schemas and perform bulk operations on note properties. Includes inter-plugin API for Templater integration.",
 	"author": "Sean Dunn <sean@attamusc.com>",
 	"authorUrl": "",
 	"fundingUrl": "",

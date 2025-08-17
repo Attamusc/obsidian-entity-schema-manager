@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "atlas/notes/Sean.md",
+                "file": "atlas/notes/Sean Team.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Sean"
+              "title": "Sean Team"
             }
           }
         ]
@@ -40,7 +40,8 @@
             "state": {
               "type": "file-explorer",
               "state": {
-                "sortOrder": "alphabetical"
+                "sortOrder": "alphabetical",
+                "autoReveal": false
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -154,22 +155,23 @@
   },
   "left-ribbon": {
     "hiddenItems": {
+      "bases:Create new base": false,
+      "entity-schema-manager:Entity Schema Manager": false,
       "switcher:Open quick switcher": false,
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "entity-schema-manager:Entity Schema Manager": false
+      "command-palette:Open command palette": false
     }
   },
   "active": "35032c26fd63738f",
   "lastOpenFiles": [
-    "entity-schemas.json",
-    "atlas/notes/Sean Team.md",
     "atlas/notes/Sean.md",
     "atlas/entities/team.md",
     "atlas/entities/person.md",
+    "entity-schemas.json",
+    "atlas/notes/Sean Team.md",
     "Welcome.md",
     "calendar/notes",
     "calendar",

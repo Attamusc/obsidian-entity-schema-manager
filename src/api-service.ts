@@ -59,7 +59,7 @@ export class EntitySchemaAPIService implements EntitySchemaAPI {
 		}
 
 		const entities = this.entityScanner.getEntitiesByType(entityType);
-		
+
 		// Return defensive copies to prevent external modification
 		return entities.map(entity => ({
 			...entity,
@@ -135,7 +135,7 @@ export class EntitySchemaAPIService implements EntitySchemaAPI {
 	getEntitySummary(): Record<string, number> {
 		const summary: Record<string, number> = {};
 		const groupedEntities = this.entityScanner.getEntitiesGroupedByType();
-		
+
 		// Initialize all known types with 0 count
 		this.schemas.forEach(schema => {
 			summary[schema.name] = 0;
@@ -235,7 +235,7 @@ export class EntitySchemaAPIService implements EntitySchemaAPI {
 			return null;
 		}
 		const frontmatter = this.getEntityTemplate(entityType);
-		
+
 		const requiredProperties: string[] = [];
 		const optionalProperties: string[] = [];
 
