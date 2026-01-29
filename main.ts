@@ -13,6 +13,7 @@ import {
 } from './src/modals';
 import { EntitySchemaAPIService } from './src/api-service';
 import { EntitySchemaAPI } from './src/api';
+import { SkillInstaller } from './src/skill-installer';
 
 export type { EntitySchema } from './src/types';
 export type { EntitySchemaAPI } from './src/api';
@@ -30,6 +31,7 @@ export default class EntitySchemaPlugin extends Plugin {
 	bulkOperations: BulkOperations;
 	apiService: EntitySchemaAPIService;
 	api: EntitySchemaAPI;
+	skillInstaller: SkillInstaller;
 	static DEFAULT_SETTINGS = DEFAULT_SETTINGS;
 
 	async onload() {
@@ -39,6 +41,7 @@ export default class EntitySchemaPlugin extends Plugin {
 		this.schemaManager = new SchemaManager(this.app);
 		this.entityScanner = new EntityScanner(this.app);
 		this.bulkOperations = new BulkOperations(this.app, () => this.settings);
+		this.skillInstaller = new SkillInstaller(this.app);
 
 		// Initialize API service
 		this.apiService = new EntitySchemaAPIService(this.entityScanner, this.schemaManager);
@@ -94,6 +97,12 @@ export default class EntitySchemaPlugin extends Plugin {
 			id: 'export-entity-schemas',
 			name: 'Export entity schemas',
 			callback: () => this.exportSchemas()
+		});
+
+		this.addCommand({
+			id: 'install-agent-skill',
+			name: 'Install agent skill',
+			callback: () => this.installAgentSkill()
 		});
 
 		// Add settings tab
@@ -187,6 +196,10 @@ export default class EntitySchemaPlugin extends Plugin {
 		if (success) {
 			new Notice('Entity schemas exported to entity-schemas.json');
 		}
+	}
+
+	async installAgentSkill() {
+		await this.skillInstaller.installSkill();
 	}
 
 	/**
