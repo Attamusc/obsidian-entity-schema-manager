@@ -12,11 +12,17 @@ description: >
 
 Interact with the Entity Schema Manager plugin to query, create, and manage structured entities in an Obsidian vault.
 
-## API Access
+## Environment Setup
+
+### In-Obsidian Agents (via plugins like Smart Connections, Copilot)
 
 ```javascript
-// Get API instance
+// Direct API access - primary method
 const api = window['entity-schema-manager.api.v1'];
+
+// Alternative: plugin registry access
+const plugin = app.plugins.plugins['entity-schema-manager'];
+const api = plugin?.api;
 
 // Check availability
 if (!api) {
@@ -24,6 +30,31 @@ if (!api) {
   const schemas = JSON.parse(await app.vault.adapter.read('entity-schemas.json'));
 }
 ```
+
+### External Agents (file-based access)
+
+```javascript
+// Read schema definitions directly
+const schemasPath = `${vaultPath}/entity-schemas.json`;
+const schemas = JSON.parse(fs.readFileSync(schemasPath, 'utf-8'));
+
+// Read entities by scanning markdown files
+// Use frontmatter parsing + schema matching logic
+// See references/agent-patterns.md for complete external agent patterns
+```
+
+## Common Questions & Answers
+
+Quick reference for mapping user questions to API calls:
+
+| User Asks | API Pattern | Example Response |
+|-----------|-------------|------------------|
+| "What kinds of entities do I have?" | `api.getEntityTypeNames()` | "You have: Person, Team, Project" |
+| "How many people are there?" | `api.getEntitySummary()['Person']` | "5 Person entities" |
+| "Show me all teams" | `api.getEntitiesByType('Team')` | Table of team names and files |
+| "What's missing from my entities?" | `api.getEntityValidation('Person')` | List of entities with missing props |
+| "Who's on Team X?" | Filter entities by property | List of people with team=X |
+| "What references this person?" | Traverse entity links | List of entities linking to target |
 
 ## Common Operations
 
@@ -76,39 +107,104 @@ const content = `---\n${yaml}\n---\n\n# ${entityName}`;
 await app.vault.create(`${folder}/${filename}.md`, content);
 ```
 
-### Identify Entity Type for File
+## Modifying Entities
+
+### Add a Property to a Single Entity
 
 ```javascript
-// Given a file, determine its entity type
-function getEntityType(file, frontmatter) {
+// Read file, parse frontmatter, add property, write back
+async function addProperty(file, propName, value) {
+  const content = await app.vault.read(file);
+  const newContent = addPropertyToFrontmatter(content, propName, value);
+  await app.vault.modify(file, newContent);
+}
+
+function addPropertyToFrontmatter(content, propName, value) {
+  const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
+  const match = content.match(frontmatterRegex);
+  
+  if (match) {
+    const frontmatter = match[1];
+    const newFrontmatter = `${frontmatter}\n${propName}: ${JSON.stringify(value)}`;
+    return content.replace(frontmatterRegex, `---\n${newFrontmatter}\n---`);
+  } else {
+    // No existing frontmatter
+    return `---\n${propName}: ${JSON.stringify(value)}\n---\n\n${content}`;
+  }
+}
+```
+
+### Batch Updates (In-Obsidian only)
+
+```javascript
+// Update property across all entities of a type
+const entities = api.getEntitiesByType('Person');
+for (const entity of entities) {
+  await addProperty(entity.file, 'department', 'Engineering');
+}
+```
+
+## Identify Entity Type for File
+
+Given a file and its frontmatter, determine its entity type with complete edge case handling:
+
+```javascript
+function identifyEntityType(file, frontmatter) {
   const schemas = api.getEntitySchemas();
   
   for (const schema of schemas) {
-    const criteria = schema.matchCriteria;
-    
-    // Check folder path
-    if (criteria.folderPath && !file.path.startsWith(criteria.folderPath)) continue;
-    
-    // Check required properties exist
-    if (criteria.requiredProperties) {
-      const missing = criteria.requiredProperties.filter(p => !(p in frontmatter));
-      if (missing.length > 0) continue;
+    if (matchesSchema(file, frontmatter, schema)) {
+      return {
+        type: schema.name,
+        schema: schema,
+        missingRequired: findMissingRequired(frontmatter, schema)
+      };
     }
-    
-    // Check property values match
-    if (criteria.propertyValues) {
-      const mismatch = Object.entries(criteria.propertyValues).some(([key, expected]) => {
-        const actual = frontmatter[key];
-        // Handle Obsidian links: [[path]] or [[path|display]]
-        const normalize = v => String(v).replace(/^\[\[|\]\]$/g, '').split('|')[0];
-        return normalize(actual) !== normalize(expected);
-      });
-      if (mismatch) continue;
-    }
-    
-    return schema.name;  // Found matching schema
   }
-  return null;  // No match
+  return { type: null, schema: null, missingRequired: [] };
+}
+
+function matchesSchema(file, frontmatter, schema) {
+  const c = schema.matchCriteria;
+  
+  // Check folder path
+  if (c.folderPath && !file.path.startsWith(c.folderPath)) return false;
+  
+  // Check required properties exist
+  if (c.requiredProperties) {
+    for (const prop of c.requiredProperties) {
+      if (!(prop in frontmatter)) return false;
+    }
+  }
+  
+  // Check property values (with Obsidian link normalization)
+  if (c.propertyValues) {
+    for (const [key, expected] of Object.entries(c.propertyValues)) {
+      if (!propertyValuesMatch(frontmatter[key], expected)) return false;
+    }
+  }
+  
+  return true;
+}
+
+function propertyValuesMatch(actual, expected) {
+  const normalize = v => String(v || '')
+    .replace(/^\[\[|\]\]$/g, '')  // Remove [[ and ]]
+    .split('|')[0]                 // Remove display text
+    .replace(/\.md$/, '')          // Remove .md extension
+    .toLowerCase();
+  
+  return normalize(actual) === normalize(expected);
+}
+
+function findMissingRequired(frontmatter, schema) {
+  const missing = [];
+  for (const [propName, propDef] of Object.entries(schema.properties)) {
+    if (propDef.required && !(propName in frontmatter)) {
+      missing.push(propName);
+    }
+  }
+  return missing;
 }
 ```
 
@@ -141,9 +237,10 @@ const schemas = JSON.parse(content);
 // Use matching logic above to identify entity types
 ```
 
-## Schema Reference
+## References
 
-For detailed schema structure and TypeScript interfaces, see [references/schema-format.md](references/schema-format.md).
+- **[references/schema-format.md](references/schema-format.md)** - Detailed schema structure and TypeScript interfaces
+- **[references/agent-patterns.md](references/agent-patterns.md)** - Complete patterns for queries, relationships, validation, modification, and error handling
 
 ### Quick Reference
 
